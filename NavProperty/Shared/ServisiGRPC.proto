@@ -1,0 +1,20 @@
+﻿syntax = "proto3";
+option csharp_namespace = "grpcStuff";
+
+
+service KorisniciServ {
+	rpc IzlistajKorisnike (KorisnikMsg) returns (KorisnikMsg);
+}
+
+message KorisnikMsg {
+	int32 ID = 1;
+	string Ime = 2;
+	string Prezime = 3;
+	repeated AdresaMsg Adrese = 4;
+}
+
+message AdresaMsg {
+	string ID = 1;
+	string Ulica = 2;
+	string Broj = 3;
+}
