@@ -1,14 +1,101 @@
 ﻿@page "/"
 @using grpcStuff
+@using NavProperty.Shared
+@using Grpc.Core
+@inject Konvertor _kon
 @inject KorisniciServ.KorisniciServClient _ksc
 
 <h1>Hello, world!</h1>
 <button @onclick="Nesto">Test</button>
-
+<div>
+	<p>@_kor.Ime @_kor.Prezime</p>
+	<ul>
+		@foreach (Adresa a in _kor.Adrese)
+		{
+			<li>@a.Ulica @a.Broj</li>
+		}
+	</ul>
+</div>
+<button @onclick="gRpcStream">Test stream</button>
+<p>
+	<ul>
+		@foreach (Korisnik k in _lKor)
+		{
+			<li>@k.ID @k.Ime @k.Prezime</li>
+		}
+	</ul>
+</p>
+<button @onclick="kliStream">Test klijent stream</button>
+<p>Zbir je<b>@_zbir</b></p>
+<button @onclick="dupStream">Test duplex stream</button>
 @code
 {
+	private Korisnik _kor = new Korisnik();
+	private List<Korisnik> _lKor = new List<Korisnik>();
+	private int _zbir;
 	private async Task Nesto()
 	{
-		await _ksc.IzlistajKorisnikeAsync(new KorisnikMsg());
+		_kor = _kon.Konvert(await _ksc.DajJednogKorisnikaAsync(new PraznaMsg()));
+		StateHasChanged();
 	}
+
+	private async Task gRpcStream()
+	{
+		using (var pozivKaServeru = _ksc.IzlistajKorisnike(new PraznaMsg()))
+		{
+			await foreach (KorisnikMsg km in pozivKaServeru.ResponseStream.ReadAllAsync())
+			{
+				_lKor.Add(_kon.Konvert(km));
+				StateHasChanged();
+			}
+		}
+	}
+
+	private async Task kliStream()
+	{
+		using (var poziv = _ksc.Sabirac())
+		{
+			Console.WriteLine("Krecem");
+			int[] Brojevi = { 4, 6, 8, 10, 2, 30, 40, 1, 2, 3 };
+			foreach (int br in Brojevi)
+			{
+				Console.WriteLine("Saljem");
+				await poziv.RequestStream.WriteAsync(new BrojMsg { Br = br });
+				await Task.Delay(1000);
+			}
+			Console.WriteLine("Zavrsio");
+			await poziv.RequestStream.CompleteAsync();
+			Console.WriteLine("Cekam rezultat");
+			_zbir = (await poziv.ResponseAsync).Br;
+		}
+	}
+
+	private async Task dupStream()
+	{
+		using (var poziv = _ksc.DuplexTest())
+		{
+			Console.WriteLine("Krecem");
+			int[] Brojevi = { 4, 6, 8, 10, 2, 30, 40, 1, 2, 3 };
+			foreach (int br in Brojevi)
+			{
+				Console.WriteLine($"Saljem {br}");
+				await poziv.RequestStream.WriteAsync(new BrojMsg { Br = br });
+			}
+			Console.WriteLine("Zavrsio");
+
+			await poziv.RequestStream.CompleteAsync();
+
+			var grabiOdgovore = Task.Run(async () =>
+			{
+				await foreach(BrojMsg brm in poziv.ResponseStream.ReadAllAsync())
+				{
+					Console.WriteLine($"Dobio {brm.Br}");
+				}
+			});
+
+			await grabiOdgovore;
+
+		}
+	}
+
 }

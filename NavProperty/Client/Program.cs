@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Components;
 using Grpc.Net.Client.Web;
 using Grpc.Net.Client;
 using grpcStuff;
+using NavProperty.Shared;
 
 namespace NavProperty.Client
 {
@@ -31,7 +32,7 @@ namespace NavProperty.Client
 
 				return new KorisniciServ.KorisniciServClient(kanal);
 			});
-
+			builder.Services.AddTransient<Konvertor>();
 			await builder.Build().RunAsync();
 		}
 	}

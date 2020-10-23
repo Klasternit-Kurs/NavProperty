@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NavProperty.Server.grpcServisi;
+using NavProperty.Shared;
 using System.Linq;
 
 namespace NavProperty.Server
@@ -28,6 +29,7 @@ namespace NavProperty.Server
 			services.AddGrpc();
 			services.AddControllersWithViews();
 			services.AddRazorPages();
+			services.AddTransient<Konvertor>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

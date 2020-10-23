@@ -3,7 +3,16 @@ option csharp_namespace = "grpcStuff";
 
 
 service KorisniciServ {
-	rpc IzlistajKorisnike (KorisnikMsg) returns (KorisnikMsg);
+	rpc DajJednogKorisnika (PraznaMsg) returns (KorisnikMsg);
+	rpc IzlistajKorisnike (PraznaMsg) returns (stream KorisnikMsg);
+	rpc Sabirac (stream BrojMsg) returns (BrojMsg);
+	rpc DuplexTest (stream BrojMsg) returns (stream BrojMsg);
+}
+
+message PraznaMsg {}
+
+message BrojMsg {
+	int32 Br = 1;
 }
 
 message KorisnikMsg {
